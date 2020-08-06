@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "parcel build src/index.js && parcel test/index.html",
+    "build": "parcel build src/index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,13 @@
   "bugs": {
     "url": "https://github.com/sqshada/CApis/issues"
   },
-  "homepage": "https://github.com/sqshada/CApis#readme"
+  "homepage": "https://github.com/sqshada/CApis#readme",
+  "dependencies": {
+    "@babel/core": "^7.11.1",
+    "@babel/plugin-transform-object-assign": "^7.10.4",
+    "@babel/plugin-transform-runtime": "^7.11.0",
+    "axios": "^0.19.2",
+    "babel-preset-env": "^1.7.0",
+    "parcel": "^1.12.4"
+  }
 }
