@@ -3,26 +3,26 @@ import CApis from "../dist/index.js";
 let serverMap = {
   baseServer: {
     default: true,
-    baseURL: "https://base.apis.com"
+    baseURL: "https://base.apis.com",
   },
   authServer: {
-    baseURL: "https://auth.apis.com"
+    baseURL: "https://auth.apis.com",
   },
   orderServer: {
-    baseURL: "http://localhost:4320"
-  }
+    baseURL: "http://localhost:4320",
+  },
 };
 
 let apiMap = {
   getBaseInfo: {
     method: "get",
-    url: "/info"
+    url: "/info",
   },
   "user/postOrder": {
     server: "orderServer",
     method: "post",
-    url: "/order/:id"
-  }
+    url: "/order/:id/:sest",
+  },
 };
 
 CApis.useReq(
@@ -36,15 +36,14 @@ CApis.useReq(
 );
 
 let apis = new CApis(serverMap, apiMap);
+console.log(apis, "apis");
 
-console.log(apis, 'apis')
-
-// window.apis = apis;
+window.apis = apis;
 
 // apis.getBaseInfo();
 
-// apis.user.postOrder({
-//   rest: {
-//     id: 1234
-//   }
-// });
+apis.user.postOrder({
+  rest: {
+    id: 1234,
+  },
+});

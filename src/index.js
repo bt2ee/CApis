@@ -3,10 +3,15 @@ class CApis {
   constructor(serverMap, apiMap) {
     this.serverMap = serverMap;
     this.apiMap = apiMap;
+    this.instance = {
+      // 便于直接调用 axios.request
+      gRequest: axios.request,
+    };
     if (this.validate) {
       this.combine();
       this.middleware();
       this.parse();
+      return this.instance;
     } else {
       console.error("参数不合法，请检查你的参数配置");
     }
@@ -70,9 +75,52 @@ class CApis {
     });
   }
 
+  // 挂载 api 至 instance 上
+  namespace(obj, keys, cb) {
+    const key = keys[0];
+
+    if (keys.length === 1) {
+      obj[key] = obj[key] || cb;
+    } else {
+      obj[key] = obj[key] || {};
+      this.namespace(obj[key], keys.slice(1), cb);
+    }
+  }
+
+  // 参数
+  comboo(api, config) {
+    if (config.rest) {
+      // 替换 rest 参数
+      config.url = this.restful(api.url, config.rest);
+    }
+    return Object.assign({}, api, config);
+  }
+
+  // restful
+  restful(url, restParams) {
+    const regex = /\:[^/]*/g;
+    return url.replace(regex, (p) => {
+      const key = p.slice(1);
+      if (restParams[key]) {
+        return restParams[key];
+      }
+      return p;
+    });
+  }
+
   // 解析 api
   parse() {
-    // console.log(this.apiMap, 'apiMap')
+    for (const key of Object.keys(this.apiMap)) {
+      const keys = key.replace(/^\//, "").split("/");
+      this.namespace(this.instance, keys, (config) => {
+        let resultApi = this.apiMap[key];
+        if (config) {
+          // 如果有 params、data、rest
+          resultApi = this.comboo(resultApi, config);
+        }
+        return axios.request(resultApi);
+      });
+    }
   }
 }
 
