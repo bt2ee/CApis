@@ -1,127 +1,123 @@
-import axios from "axios";
-class CApis {
-  constructor(serverMap, apiMap) {
-    this.serverMap = serverMap;
-    this.apiMap = apiMap;
-    this.instance = {
-      // 便于直接调用 axios.request
-      gRequest: axios.request,
-    };
-    if (this.validate) {
-      this.combine();
-      this.middleware();
-      this.parse();
-      return this.instance;
+import axios from 'axios';
+
+class Apis {
+  constructor(serverMap, apiMap, axiosConfig = {}) {
+    this.httpClient = axios.create(axiosConfig);
+    this._serverMap_ = serverMap;
+    this._apiMap_ = apiMap;
+
+    if (this._validate_) {
+      this._format_();
+      this._combine_();
     } else {
-      console.error("参数不合法，请检查你的参数配置");
+      console.error('apis: 参数不合法，请检查你的配置参数');
     }
+
+    return this;
   }
 
-  static reqMiddleware = [];
-  static resMiddleware = [];
-  static useReq = function() {
-    this.reqMiddleware.push(arguments);
-  };
-  static useRes = function() {
-    this.resMiddleware.push(arguments);
-  };
-
-  // 如果后期需要检查的话，可以在这里加
-  get validate() {
-    if (!this.serverMap || !this.apiMap) {
-      return false;
-    }
+  get _validate_() {
     return true;
   }
 
-  // 获取 serverMap 中的 default server
-  get base() {
-    let base = "";
-    for (const key of Object.keys(this.serverMap)) {
+  get _base_() {
+    let base = '';
+
+    for (const key of Object.keys(this._serverMap_)) {
       if (!base) {
         base = key;
       }
-      if (this.serverMap[key].default) {
+
+      if (this._serverMap_[key].default) {
         base = key;
       }
     }
+
     if (!base) {
-      console.error("没有找到默认的服务器配置");
+      console.error('apis: 找不到默认服务器配置');
     }
+
     return base;
   }
 
-  // 整合 apiMap
-  combine() {
-    for (const key of Object.keys(this.apiMap)) {
-      const item = this.apiMap[key];
+  _format_() {
+    for (const key of Object.keys(this._apiMap_)) {
+      const item = this._apiMap_[key];
 
       if (!item.server) {
-        item.server = this.base;
+        item.server = this._base_;
       }
 
-      this.apiMap[key] = Object.assign({}, this.serverMap[item.server], item);
+      this._apiMap_[key] = Object.assign({},
+        this._serverMap_[item.server],
+        item
+      );
     }
   }
 
-  // 中间件 axios 拦截器
-  middleware() {
-    CApis.reqMiddleware.map((middleware) => {
-      axios.interceptors.request.use(...middleware);
-    });
+  useReq(fulfilled, rejected) {
+    this.httpClient.interceptors.request.use(fulfilled, rejected);
+  }
 
-    CApis.resMiddleware.map((middleware) => {
-      axios.interceptors.response.use(...middleware);
+  useRes(fulfilled, rejected) {
+    this.httpClient.interceptors.response.use(fulfilled, rejected);
+  }
+
+  _restful_(url, rest) {
+    const regex = /\:[^/]*/g;
+
+    return url.replace(regex, (p) => {
+      const key = p.slice(1);
+      if (rest[key]) {
+        return rest[key];
+      }
+      return p;
     });
   }
 
-  // 挂载 api 至 instance 上
-  namespace(obj, keys, cb) {
+  _comboo_(bf, af) {
+    if (af.rest) {
+      af.url = this._restful_(bf.url, af.rest);
+    }
+
+    return Object.assign({}, bf, af);
+  }
+
+  _namespace_(obj, keys, cb) {
     const key = keys[0];
 
     if (keys.length === 1) {
       obj[key] = obj[key] || cb;
     } else {
       obj[key] = obj[key] || {};
-      this.namespace(obj[key], keys.slice(1), cb);
+      this._namespace_(obj[key], keys.slice(1), cb);
     }
   }
 
-  // 参数
-  comboo(api, config) {
-    if (config.rest) {
-      // 替换 rest 参数
-      config.url = this.restful(api.url, config.rest);
-    }
-    return Object.assign({}, api, config);
-  }
-
-  // restful
-  restful(url, restParams) {
-    const regex = /\:[^/]*/g;
-    return url.replace(regex, (p) => {
-      const key = p.slice(1);
-      if (restParams[key]) {
-        return restParams[key];
-      }
-      return p;
-    });
-  }
-
-  // 解析 api
-  parse() {
-    for (const key of Object.keys(this.apiMap)) {
-      const keys = key.replace(/^\//, "").split("/");
-      this.namespace(this.instance, keys, (config) => {
-        let resultApi = this.apiMap[key];
+  _combine_() {
+    for (const key of Object.keys(this._apiMap_)) {
+      const keys = key.replace(/^\//, '').split('/');
+      this._namespace_(this, keys, (config) => {
+        let result = this._apiMap_[key];
         if (config) {
-          // 如果有 params、data、rest
-          resultApi = this.comboo(resultApi, config);
+          result = this._comboo_(this._apiMap_[key], config);
         }
-        return axios.request(resultApi);
+        return this.httpClient.request(result);
       });
     }
   }
 }
 
-export default CApis;
+// 声明该方法是因为在typescript class(d.ts)需要拓展类型
+Apis.create = function(serverMap, apiMap, axiosConfig = {}) {
+  return new Apis(serverMap, apiMap, axiosConfig);
+};
+
+Apis.useReq = function() {
+  console.error('Apis: Apis.useReq已废弃，请使用实例上 useReq 方法');
+};
+Apis.useRes = function() {
+  console.error('Apis: Apis.useRes 已废弃，请使用实例上 useRes 方法');
+};
+
+export default Apis;

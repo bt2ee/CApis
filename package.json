@@ -1,28 +1,47 @@
 {
-  "name": "capis",
+  "name": "@shadasd/apis",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "基于 axios 封装的接口管理方案",
+  "main": "dist/index.min.js",
+  "module": "dist/index.esm.min.js",
+  "types": "types/index.d.ts",
+  "files": [
+    "dist",
+    "test",
+    "types"
+  ],
   "scripts": {
-    "test": "parcel build src/index.js && parcel test/index.html",
-    "build": "parcel build src/index.js"
+    "build": "rollup -c rollup.config.mini.js && rollup -c rollup.config.base.js",
+    "prepublishOnly": "yarn build"
   },
+  "keywords": [
+    "axios",
+    "api",
+    "restful"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sqshada/CApis.git"
   },
   "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/sqshada/CApis/issues"
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "rollup": "^1.29.0"
   },
   "homepage": "https://github.com/sqshada/CApis#readme",
-  "dependencies": {
-    "@babel/core": "^7.11.1",
-    "@babel/plugin-transform-object-assign": "^7.10.4",
-    "@babel/plugin-transform-runtime": "^7.11.0",
-    "axios": "^0.19.2",
-    "babel-preset-env": "^1.7.0",
-    "parcel": "^1.12.4"
+  "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/helper-compilation-targets": "^7.10.2",
+    "@babel/plugin-transform-object-assign": "^7.10.1",
+    "@babel/plugin-transform-runtime": "^7.10.1",
+    "@babel/plugin-transform-typeof-symbol": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "@rollup/plugin-commonjs": "^11.0.1",
+    "@rollup/plugin-json": "^4.0.1",
+    "@rollup/plugin-node-resolve": "^7.0.0",
+    "core-js": "3",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-terser": "^6.1.0"
   }
 }
